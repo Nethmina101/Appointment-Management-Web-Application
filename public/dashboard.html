@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="AppointBook dashboard — view and manage your appointments." />
+  <title>Dashboard — AppointBook</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="gradient-bg">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- ── Navbar ── -->
+  <header class="navbar" role="banner">
+    <div class="container navbar-inner">
+      <div class="navbar-brand">
+        <div class="navbar-brand-icon" aria-hidden="true">📅</div>
+        AppointBook
+      </div>
+      <nav class="navbar-right" aria-label="User navigation">
+        <div class="user-chip" id="user-chip">
+          <div class="user-avatar" id="user-avatar" aria-hidden="true">?</div>
+          <span id="user-name">Loading…</span>
+          <span id="role-badge" class="badge hidden"></span>
+        </div>
+        <button id="logout-btn" class="btn btn-secondary btn-sm">
+          Sign Out
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── Main ── -->
+  <main id="main-content" class="container" style="padding-block: 0 var(--sp-16);">
+
+    <!-- Page header -->
+    <div class="page-header" id="page-header">
+      <h1 class="page-title" id="page-title">Dashboard</h1>
+      <p class="page-subtitle" id="page-subtitle">Welcome back</p>
+    </div>
+
+    <!-- Alert -->
+    <div id="alert-box" role="alert" aria-live="polite" style="margin-bottom:var(--sp-4);"></div>
+
+    <!-- Stats strip -->
+    <div class="stats-grid" id="stats-grid">
+      <div class="stat-card" style="--stat-accent: var(--clr-pending)">
+        <div class="stat-value" id="stat-pending">—</div>
+        <div class="stat-label">Pending</div>
+      </div>
+      <div class="stat-card" style="--stat-accent: var(--clr-approved)">
+        <div class="stat-value" id="stat-approved">—</div>
+        <div class="stat-label">Approved</div>
+      </div>
+      <div class="stat-card" style="--stat-accent: var(--clr-completed)">
+        <div class="stat-value" id="stat-completed">—</div>
+        <div class="stat-label">Completed</div>
+      </div>
+      <div class="stat-card" style="--stat-accent: var(--clr-cancelled)">
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-label">Total</div>
+      </div>
+    </div>
+
+    <!-- Book button (client only) -->
+    <div id="client-actions" class="hidden" style="margin-bottom:var(--sp-6);">
+      <button id="open-book-btn" class="btn btn-primary">
+        <span aria-hidden="true">＋</span> Book Appointment
+      </button>
+    </div>
+
+    <!-- Filters bar -->
+    <div class="filters-bar" role="search" aria-label="Filter appointments">
+      <div class="form-group" style="grid-column: 1 / -1;" id="search-group">
+        <label class="form-label" for="filter-search">Search</label>
+        <input class="form-input" type="search" id="filter-search" placeholder="Search by title…" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="filter-status">Status</label>
+        <select class="form-select" id="filter-status">
+          <option value="">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="filter-from">From</label>
+        <input class="form-input" type="date" id="filter-from" />
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="filter-to">To</label>
+        <input class="form-input" type="date" id="filter-to" />
+      </div>
+    </div>
+
+    <!-- Appointments list -->
+    <section aria-label="Appointments">
+      <h2 class="section-title">Appointments</h2>
+      <div id="appointments-list" style="display:flex;flex-direction:column;gap:var(--sp-4);min-height:100px;position:relative;">
+        <!-- Filled by JS -->
+        <div class="empty-state">
+          <div class="empty-icon">📋</div>
+          <h3>Loading…</h3>
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      <nav id="pagination" class="pagination hidden" aria-label="Pagination"></nav>
+    </section>
+  </main>
+
+  <!-- ── Book / Reschedule Modal ── -->
+  <div id="book-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">Book Appointment</h2>
+        <button class="modal-close" id="close-modal-btn" aria-label="Close dialog">✕</button>
+      </div>
+
+      <div id="modal-alert" role="alert" aria-live="polite"></div>
+
+      <form id="book-form" class="auth-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="appt-title">Title / Purpose</label>
+          <input class="form-input" type="text" id="appt-title" placeholder="e.g. Consultation" required aria-required="true" aria-describedby="title-err" />
+          <span id="title-err" class="form-error hidden"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="appt-date">Date (Mon–Fri)</label>
+          <input class="form-input" type="date" id="appt-date" required aria-required="true" aria-describedby="date-err" />
+          <span id="date-err" class="form-error hidden"></span>
+        </div>
+
+        <div class="form-group" id="slots-group">
+          <label class="form-label">Available time slots (UTC)</label>
+          <p class="tz-note">Shown in UTC — your local time is displayed in the list below.</p>
+          <div id="slots-loading" class="hidden flex items-center gap-2 text-muted text-sm" style="padding:var(--sp-2);">
+            <span class="spinner"></span> Loading slots…
+          </div>
+          <div id="slot-grid" class="slot-grid"></div>
+          <input type="hidden" id="appt-startsAt" required />
+          <span id="slot-err" class="form-error hidden"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="appt-duration">Duration</label>
+          <select class="form-select" id="appt-duration">
+            <option value="30">30 minutes</option>
+            <option value="60">1 hour</option>
+            <option value="90">1.5 hours</option>
+            <option value="120">2 hours</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="appt-notes">Notes <span class="text-xs text-muted">(optional)</span></label>
+          <textarea class="form-textarea" id="appt-notes" placeholder="Any additional information…" maxlength="500"></textarea>
+        </div>
+
+        <div class="flex gap-3" style="justify-content:flex-end;">
+          <button type="button" id="cancel-modal-btn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="book-submit-btn" class="btn btn-primary">
+            <span id="book-btn-text">Book</span>
+            <span id="book-spinner" class="spinner hidden"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── Confirm Dialog ── -->
+  <div id="confirm-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="confirm-title">Confirm Action</h2>
+      </div>
+      <p id="confirm-message" style="color:var(--clr-text-muted);margin-bottom:var(--sp-6);"></p>
+      <div class="flex gap-3" style="justify-content:flex-end;">
+        <button id="confirm-cancel" class="btn btn-secondary">Cancel</button>
+        <button id="confirm-ok" class="btn btn-danger">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Admin Status Modal ── -->
+  <div id="status-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="status-modal-title">
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <h2 class="modal-title" id="status-modal-title">Update Status</h2>
+        <button class="modal-close" id="close-status-modal" aria-label="Close">✕</button>
+      </div>
+      <div id="status-modal-alert" role="alert" aria-live="polite"></div>
+      <form id="status-form" class="auth-form">
+        <div class="form-group">
+          <label class="form-label" for="new-status">New Status</label>
+          <select class="form-select" id="new-status">
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="status-note">Note <span class="text-xs text-muted">(optional)</span></label>
+          <textarea class="form-textarea" id="status-note" placeholder="Reason or message…" maxlength="200" style="min-height:70px;"></textarea>
+        </div>
+        <div class="flex gap-3" style="justify-content:flex-end;">
+          <button type="button" id="cancel-status-btn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="status-submit-btn" class="btn btn-primary">
+            <span id="status-btn-text">Update</span>
+            <span id="status-spinner" class="spinner hidden"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="toast-container" aria-live="polite" aria-label="Notifications"></div>
+
+  <script src="/app.js" defer></script>
+  <script src="/dashboard.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Sign in to your Appointment Management account." />
+  <title>Login — AppointBook</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="gradient-bg">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- Ambient orbs -->
+  <div class="auth-orb auth-orb-1" aria-hidden="true"></div>
+  <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
+
+  <main id="main-content" class="auth-page">
+    <div class="auth-card" role="main">
+      <!-- Logo -->
+      <div class="auth-logo">
+        <div class="auth-logo-icon" aria-hidden="true">📅</div>
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-subtitle">Sign in to manage your appointments</p>
+      </div>
+
+      <!-- Alert area -->
+      <div id="alert-box" role="alert" aria-live="polite"></div>
+
+      <!-- Form -->
+      <form id="login-form" class="auth-form" novalidate autocomplete="on">
+        <div class="form-group">
+          <label class="form-label" for="email">Email address</label>
+          <input
+            class="form-input"
+            type="email"
+            id="email"
+            name="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+            aria-required="true"
+            aria-describedby="email-error"
+          />
+          <span id="email-error" class="form-error hidden" aria-live="polite"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input
+            class="form-input"
+            type="password"
+            id="password"
+            name="password"
+            autocomplete="current-password"
+            placeholder="••••••••"
+            required
+            aria-required="true"
+            aria-describedby="password-error"
+          />
+          <span id="password-error" class="form-error hidden" aria-live="polite"></span>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn btn-primary w-full">
+          <span id="btn-text">Sign In</span>
+          <span id="btn-spinner" class="spinner hidden" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="/signup.html">Create one</a>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast-container" aria-live="polite" aria-label="Notifications"></div>
+
+  <script src="/app.js" defer></script>
+  <script src="/login.js" defer></script>
+</body>
+</html>

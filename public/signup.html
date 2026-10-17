@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Create your AppointBook account to start booking appointments." />
+  <title>Sign Up — AppointBook</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="gradient-bg">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <div class="auth-orb auth-orb-1" aria-hidden="true"></div>
+  <div class="auth-orb auth-orb-2" aria-hidden="true"></div>
+
+  <main id="main-content" class="auth-page">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="auth-logo-icon" aria-hidden="true">📅</div>
+        <h1 class="auth-title">Create account</h1>
+        <p class="auth-subtitle">Start managing your appointments today</p>
+      </div>
+
+      <div id="alert-box" role="alert" aria-live="polite"></div>
+
+      <form id="signup-form" class="auth-form" novalidate autocomplete="on">
+        <div class="form-group">
+          <label class="form-label" for="name">Full name</label>
+          <input
+            class="form-input"
+            type="text"
+            id="name"
+            name="name"
+            autocomplete="name"
+            placeholder="Jane Smith"
+            required
+            aria-required="true"
+            aria-describedby="name-error"
+          />
+          <span id="name-error" class="form-error hidden" aria-live="polite"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">Email address</label>
+          <input
+            class="form-input"
+            type="email"
+            id="email"
+            name="email"
+            autocomplete="email"
+            placeholder="you@example.com"
+            required
+            aria-required="true"
+            aria-describedby="email-error"
+          />
+          <span id="email-error" class="form-error hidden" aria-live="polite"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password <span class="text-xs text-muted">(min 8 characters)</span></label>
+          <input
+            class="form-input"
+            type="password"
+            id="password"
+            name="password"
+            autocomplete="new-password"
+            placeholder="••••••••"
+            required
+            aria-required="true"
+            aria-describedby="password-error"
+          />
+          <span id="password-error" class="form-error hidden" aria-live="polite"></span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="confirmPassword">Confirm password</label>
+          <input
+            class="form-input"
+            type="password"
+            id="confirmPassword"
+            name="confirmPassword"
+            autocomplete="new-password"
+            placeholder="••••••••"
+            required
+            aria-required="true"
+            aria-describedby="confirm-error"
+          />
+          <span id="confirm-error" class="form-error hidden" aria-live="polite"></span>
+        </div>
+
+        <button type="submit" id="submit-btn" class="btn btn-primary w-full">
+          <span id="btn-text">Create Account</span>
+          <span id="btn-spinner" class="spinner hidden" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="/">Sign in</a>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast-container" aria-live="polite"></div>
+  <script src="/app.js" defer></script>
+  <script src="/signup.js" defer></script>
+</body>
+</html>
