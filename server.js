@@ -13,6 +13,7 @@ const path         = require('path');
 const connectDB            = require('./config/db');
 const authRoutes           = require('./routes/auth');
 const appointmentRoutes    = require('./routes/appointments');
+const adminRoutes          = require('./routes/admin');
 const { errorHandler }     = require('./middleware');
 const { generalLimiter }   = require('./middleware/rateLimiter');
 
@@ -23,7 +24,7 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       defaultSrc: ["'self'"],
-      scriptSrc:  ["'self'"],
+      scriptSrc:  ["'self'", "https://cdn.jsdelivr.net"],
       styleSrc:   ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
       fontSrc:    ["'self'", 'https://fonts.gstatic.com'],
       imgSrc:     ["'self'", 'data:'],
@@ -41,7 +42,7 @@ app.use(compression());
 app.use(cookieParser());
 app.use(express.json({ limit: '10kb' }));
 app.use(mongoSanitize()); // strips $-operator keys from req.body/query/params
-app.use(generalLimiter);
+app.use('/api', generalLimiter);
 
 // ─── Logging (skip in test env) ─────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
@@ -64,6 +65,7 @@ app.get('/api/health', (req, res) => res.json({ status: 'ok', ts: new Date().toI
 // ─── API routes ─────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/appointments', appointmentRoutes);
+app.use('/api/admin', adminRoutes);
 
 // ─── SPA fallback — serve index.html for any unmatched non-API route ─────────
 app.get(/^(?!\/api).*/, (req, res) => {

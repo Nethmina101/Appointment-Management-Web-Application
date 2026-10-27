@@ -33,6 +33,7 @@ const createAppointment = Joi.object({
   }),
   durationMinutes: Joi.number().integer().min(15).max(240).default(30),
   notes: Joi.string().trim().max(500).allow('').default(''),
+  doctor: objectId.allow('', null).optional(),
 });
 
 const rescheduleAppointment = Joi.object({
@@ -59,6 +60,7 @@ const listAppointments = Joi.object({
 
 const availability = Joi.object({
   date: Joi.date().iso().required(),
+  doctor: objectId.allow('', null).optional(),
 });
 
 module.exports = {

@@ -6,6 +6,7 @@
   <meta name="description" content="AppointBook dashboard — view and manage your appointments." />
   <title>Dashboard — AppointBook</title>
   <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js" defer></script>
 </head>
 <body class="gradient-bg">
   <a href="#main-content" class="skip-link">Skip to main content</a>
@@ -42,74 +43,336 @@
     <!-- Alert -->
     <div id="alert-box" role="alert" aria-live="polite" style="margin-bottom:var(--sp-4);"></div>
 
-    <!-- Stats strip -->
-    <div class="stats-grid" id="stats-grid">
-      <div class="stat-card" style="--stat-accent: var(--clr-pending)">
-        <div class="stat-value" id="stat-pending">—</div>
-        <div class="stat-label">Pending</div>
-      </div>
-      <div class="stat-card" style="--stat-accent: var(--clr-approved)">
-        <div class="stat-value" id="stat-approved">—</div>
-        <div class="stat-label">Approved</div>
-      </div>
-      <div class="stat-card" style="--stat-accent: var(--clr-completed)">
-        <div class="stat-value" id="stat-completed">—</div>
-        <div class="stat-label">Completed</div>
-      </div>
-      <div class="stat-card" style="--stat-accent: var(--clr-cancelled)">
-        <div class="stat-value" id="stat-total">—</div>
-        <div class="stat-label">Total</div>
-      </div>
-    </div>
+    <!-- ═══════════════════════════════════════════════════════════
+         ADMIN SECTION — hidden for patients
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="admin-section" class="hidden">
 
-    <!-- Book button (client only) -->
-    <div id="client-actions" class="hidden" style="margin-bottom:var(--sp-6);">
-      <button id="open-book-btn" class="btn btn-primary">
-        <span aria-hidden="true">＋</span> Book Appointment
-      </button>
-    </div>
-
-    <!-- Filters bar -->
-    <div class="filters-bar" role="search" aria-label="Filter appointments">
-      <div class="form-group" style="grid-column: 1 / -1;" id="search-group">
-        <label class="form-label" for="filter-search">Search</label>
-        <input class="form-input" type="search" id="filter-search" placeholder="Search by title…" autocomplete="off" />
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="filter-status">Status</label>
-        <select class="form-select" id="filter-status">
-          <option value="">All statuses</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-          <option value="completed">Completed</option>
-          <option value="cancelled">Cancelled</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="filter-from">From</label>
-        <input class="form-input" type="date" id="filter-from" />
-      </div>
-      <div class="form-group">
-        <label class="form-label" for="filter-to">To</label>
-        <input class="form-input" type="date" id="filter-to" />
-      </div>
-    </div>
-
-    <!-- Appointments list -->
-    <section aria-label="Appointments">
-      <h2 class="section-title">Appointments</h2>
-      <div id="appointments-list" style="display:flex;flex-direction:column;gap:var(--sp-4);min-height:100px;position:relative;">
-        <!-- Filled by JS -->
-        <div class="empty-state">
-          <div class="empty-icon">📋</div>
-          <h3>Loading…</h3>
+      <!-- Admin Analytics Cards -->
+      <div class="admin-stats-grid" id="admin-stats-grid">
+        <div class="admin-stat-card" style="--card-accent: var(--clr-primary-500)">
+          <div class="admin-stat-icon">📅</div>
+          <div>
+            <div class="admin-stat-value" id="astat-today-bookings">—</div>
+            <div class="admin-stat-label">Today's Bookings</div>
+          </div>
+        </div>
+        <div class="admin-stat-card" style="--card-accent: var(--clr-approved)">
+          <div class="admin-stat-icon">🩺</div>
+          <div>
+            <div class="admin-stat-value" id="astat-today-doctors">—</div>
+            <div class="admin-stat-label">Doctors Active Today</div>
+          </div>
+        </div>
+        <div class="admin-stat-card" style="--card-accent: var(--clr-accent-500)">
+          <div class="admin-stat-icon">👥</div>
+          <div>
+            <div class="admin-stat-value" id="astat-total-patients">—</div>
+            <div class="admin-stat-label">Total Patients</div>
+          </div>
+        </div>
+        <div class="admin-stat-card" style="--card-accent: var(--clr-warning)">
+          <div class="admin-stat-icon">👨‍⚕️</div>
+          <div>
+            <div class="admin-stat-value" id="astat-total-doctors">—</div>
+            <div class="admin-stat-label">Total Doctors</div>
+          </div>
+        </div>
+        <div class="admin-stat-card" style="--card-accent: var(--clr-pending)">
+          <div class="admin-stat-icon">⏳</div>
+          <div>
+            <div class="admin-stat-value" id="astat-pending">—</div>
+            <div class="admin-stat-label">Pending</div>
+          </div>
+        </div>
+        <div class="admin-stat-card" style="--card-accent: var(--clr-completed)">
+          <div class="admin-stat-icon">✓</div>
+          <div>
+            <div class="admin-stat-value" id="astat-completed-today">—</div>
+            <div class="admin-stat-label">Completed Today</div>
+          </div>
+        </div>
+        <div class="admin-stat-card" style="--card-accent: var(--clr-approved)">
+          <div class="admin-stat-icon">📊</div>
+          <div>
+            <div class="admin-stat-value" id="astat-upcoming">—</div>
+            <div class="admin-stat-label">Upcoming</div>
+          </div>
+        </div>
+        <div class="admin-stat-card" style="--card-accent: var(--clr-rejected)">
+          <div class="admin-stat-icon">📋</div>
+          <div>
+            <div class="admin-stat-value" id="astat-total-appointments">—</div>
+            <div class="admin-stat-label">All-Time Appointments</div>
+          </div>
         </div>
       </div>
 
-      <!-- Pagination -->
-      <nav id="pagination" class="pagination hidden" aria-label="Pagination"></nav>
-    </section>
+      <!-- Recent Appointments Quick View -->
+      <section class="admin-card" style="margin-bottom:var(--sp-6);">
+        <h2 class="admin-card-title">Recent Appointments</h2>
+        <div id="recent-appointments-list" class="recent-list">
+          <div class="empty-state" style="padding:var(--sp-8);"><span class="spinner"></span></div>
+        </div>
+      </section>
+
+      <!-- Admin Tabs: Appointments | Doctors | Patients -->
+      <div class="admin-tabs" role="tablist" aria-label="Admin management tabs">
+        <button type="button" class="admin-tab-btn active" id="admin-tab-appointments" role="tab" aria-selected="true" aria-controls="admin-pane-appointments">
+          📅 Appointments
+        </button>
+        <button type="button" class="admin-tab-btn" id="admin-tab-doctors" role="tab" aria-selected="false" aria-controls="admin-pane-doctors">
+          🩺 Doctors
+        </button>
+        <button type="button" class="admin-tab-btn" id="admin-tab-patients" role="tab" aria-selected="false" aria-controls="admin-pane-patients">
+          👥 Patients
+        </button>
+      </div>
+
+      <!-- Tab Pane: Appointments -->
+      <div id="admin-pane-appointments" role="tabpanel" aria-labelledby="admin-tab-appointments">
+        <!-- Filters bar -->
+        <div class="filters-bar" role="search" aria-label="Filter appointments">
+          <div class="form-group" style="grid-column: 1 / -1;" id="search-group">
+            <label class="form-label" for="filter-search">Search</label>
+            <input class="form-input" type="search" id="filter-search" placeholder="Search by title…" autocomplete="off" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="filter-status">Status</label>
+            <select class="form-select" id="filter-status">
+              <option value="">All statuses</option>
+              <option value="pending">Pending</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="filter-from">From</label>
+            <input class="form-input" type="date" id="filter-from" />
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="filter-to">To</label>
+            <input class="form-input" type="date" id="filter-to" />
+          </div>
+        </div>
+
+        <!-- Appointments list -->
+        <section aria-label="Appointments">
+          <div id="appointments-list" style="display:flex;flex-direction:column;gap:var(--sp-4);min-height:100px;position:relative;">
+            <div class="empty-state">
+              <div class="empty-icon">📋</div>
+              <h3>Loading…</h3>
+            </div>
+          </div>
+          <nav id="pagination" class="pagination hidden" aria-label="Pagination"></nav>
+        </section>
+      </div>
+
+      <!-- Tab Pane: Doctors -->
+      <div id="admin-pane-doctors" role="tabpanel" aria-labelledby="admin-tab-doctors" class="hidden">
+        <div class="admin-pane-header">
+          <h2 class="section-title" style="margin-bottom:0;">Doctor Management</h2>
+          <button id="add-doctor-btn" class="btn btn-primary btn-sm">
+            <span aria-hidden="true">＋</span> Add Doctor
+          </button>
+        </div>
+        <div class="filters-bar" style="margin-top:var(--sp-4);">
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label class="form-label" for="doctor-search">Search Doctors</label>
+            <input class="form-input" type="search" id="doctor-search" placeholder="Search by name or email…" autocomplete="off" />
+          </div>
+        </div>
+        <div id="doctors-list" style="display:flex;flex-direction:column;gap:var(--sp-4);min-height:100px;position:relative;">
+          <div class="empty-state"><span class="spinner"></span></div>
+        </div>
+        <nav id="doctors-pagination" class="pagination hidden" aria-label="Doctors pagination"></nav>
+      </div>
+
+      <!-- Tab Pane: Patients -->
+      <div id="admin-pane-patients" role="tabpanel" aria-labelledby="admin-tab-patients" class="hidden">
+        <div class="admin-pane-header">
+          <h2 class="section-title" style="margin-bottom:0;">Patient Management</h2>
+        </div>
+        <div class="filters-bar" style="margin-top:var(--sp-4);">
+          <div class="form-group" style="grid-column: 1 / -1;">
+            <label class="form-label" for="patient-search">Search Patients</label>
+            <input class="form-input" type="search" id="patient-search" placeholder="Search by name or email…" autocomplete="off" />
+          </div>
+        </div>
+        <div id="patients-list" style="display:flex;flex-direction:column;gap:var(--sp-4);min-height:100px;position:relative;">
+          <div class="empty-state"><span class="spinner"></span></div>
+        </div>
+        <nav id="patients-pagination" class="pagination hidden" aria-label="Patients pagination"></nav>
+      </div>
+
+      <!-- Analytics Chart -->
+      <section class="admin-card" style="margin-top:var(--sp-8);">
+        <h2 class="admin-card-title">Registration Analytics</h2>
+        <p class="text-sm text-muted" style="margin-bottom:var(--sp-4);">Patients vs Doctors registrations over the last 6 months</p>
+        <div class="chart-container">
+          <canvas id="analytics-chart"></canvas>
+        </div>
+      </section>
+
+    </div>
+    <!-- END admin-section -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         PATIENT SECTION — hidden for admin
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="patient-section" class="hidden">
+
+      <!-- Stats strip -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card" style="--stat-accent: var(--clr-pending)">
+          <div class="stat-value" id="stat-pending">—</div>
+          <div class="stat-label">Pending</div>
+        </div>
+        <div class="stat-card" style="--stat-accent: var(--clr-approved)">
+          <div class="stat-value" id="stat-approved">—</div>
+          <div class="stat-label">Approved</div>
+        </div>
+        <div class="stat-card" style="--stat-accent: var(--clr-completed)">
+          <div class="stat-value" id="stat-completed">—</div>
+          <div class="stat-label">Completed</div>
+        </div>
+        <div class="stat-card" style="--stat-accent: var(--clr-cancelled)">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">Total</div>
+        </div>
+      </div>
+
+      <!-- Book button (patient only) -->
+      <div id="client-actions" style="margin-bottom:var(--sp-6);">
+        <button id="open-book-btn" class="btn btn-primary">
+          <span aria-hidden="true">＋</span> Book Appointment
+        </button>
+      </div>
+
+      <!-- Filters bar -->
+      <div class="filters-bar" role="search" aria-label="Filter appointments">
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label" for="patient-filter-search">Search</label>
+          <input class="form-input" type="search" id="patient-filter-search" placeholder="Search by title…" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="patient-filter-status">Status</label>
+          <select class="form-select" id="patient-filter-status">
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="patient-filter-from">From</label>
+          <input class="form-input" type="date" id="patient-filter-from" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="patient-filter-to">To</label>
+          <input class="form-input" type="date" id="patient-filter-to" />
+        </div>
+      </div>
+
+      <!-- Appointments list -->
+      <section aria-label="Appointments">
+        <h2 class="section-title">My Appointments</h2>
+        <div id="patient-appointments-list" style="display:flex;flex-direction:column;gap:var(--sp-4);min-height:100px;position:relative;">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <h3>Loading…</h3>
+          </div>
+        </div>
+        <nav id="patient-pagination" class="pagination hidden" aria-label="Pagination"></nav>
+      </section>
+    </div>
+    <!-- END patient-section -->
+
+    <!-- ═══════════════════════════════════════════════════════════
+         DOCTOR SECTION — visible only for doctors
+         ═══════════════════════════════════════════════════════════ -->
+    <div id="doctor-section" class="hidden">
+
+      <!-- Doctor Profile Card -->
+      <div class="doctor-profile-card" id="doctor-profile-card">
+        <div class="doctor-profile-left">
+          <div class="doctor-avatar" id="doctor-avatar">🩺</div>
+          <div>
+            <h2 class="doctor-name" id="doctor-display-name">Dr. Name</h2>
+            <div class="doctor-meta">
+              <span id="doctor-display-spec" class="badge badge-completed">Specialization</span>
+              <span id="doctor-display-email" class="text-xs text-muted">email@example.com</span>
+              <span id="doctor-display-phone" class="text-xs text-muted">📞 Phone</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Doctor Stats Strip -->
+      <div class="stats-grid" id="doctor-stats-grid" style="margin-top:var(--sp-6);">
+        <div class="stat-card" style="--stat-accent: var(--clr-primary-500)">
+          <div class="stat-value" id="dstat-today">—</div>
+          <div class="stat-label">Today's Patients</div>
+        </div>
+        <div class="stat-card" style="--stat-accent: var(--clr-pending)">
+          <div class="stat-value" id="dstat-pending">—</div>
+          <div class="stat-label">Pending Approval</div>
+        </div>
+        <div class="stat-card" style="--stat-accent: var(--clr-approved)">
+          <div class="stat-value" id="dstat-approved">—</div>
+          <div class="stat-label">Approved</div>
+        </div>
+        <div class="stat-card" style="--stat-accent: var(--clr-completed)">
+          <div class="stat-value" id="dstat-completed">—</div>
+          <div class="stat-label">Completed</div>
+        </div>
+      </div>
+
+      <!-- Filters bar -->
+      <div class="filters-bar" role="search" aria-label="Filter appointments">
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label class="form-label" for="doctor-filter-search">Search</label>
+          <input class="form-input" type="search" id="doctor-filter-search" placeholder="Search by patient name or title…" autocomplete="off" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="doctor-filter-status">Status</label>
+          <select class="form-select" id="doctor-filter-status">
+            <option value="">All statuses</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="completed">Completed</option>
+            <option value="rejected">Rejected</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="doctor-filter-from">From</label>
+          <input class="form-input" type="date" id="doctor-filter-from" />
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="doctor-filter-to">To</label>
+          <input class="form-input" type="date" id="doctor-filter-to" />
+        </div>
+      </div>
+
+      <!-- Appointments list -->
+      <section aria-label="Assigned Appointments">
+        <h2 class="section-title">Assigned Patient Appointments</h2>
+        <div id="doctor-appointments-list" style="display:flex;flex-direction:column;gap:var(--sp-4);min-height:100px;position:relative;">
+          <div class="empty-state">
+            <div class="empty-icon">🩺</div>
+            <h3>Loading appointments…</h3>
+          </div>
+        </div>
+        <nav id="doctor-pagination" class="pagination hidden" aria-label="Doctor pagination"></nav>
+      </section>
+    </div>
+    <!-- END doctor-section -->
+
   </main>
 
   <!-- ── Book / Reschedule Modal ── -->
@@ -123,6 +386,14 @@
       <div id="modal-alert" role="alert" aria-live="polite"></div>
 
       <form id="book-form" class="auth-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="appt-doctor">Select Doctor</label>
+          <select class="form-select" id="appt-doctor" aria-describedby="doctor-err">
+            <option value="">-- Select a Doctor --</option>
+          </select>
+          <span id="doctor-err" class="form-error hidden"></span>
+        </div>
+
         <div class="form-group">
           <label class="form-label" for="appt-title">Title / Purpose</label>
           <input class="form-input" type="text" id="appt-title" placeholder="e.g. Consultation" required aria-required="true" aria-describedby="title-err" />
@@ -212,6 +483,56 @@
           <button type="submit" id="status-submit-btn" class="btn btn-primary">
             <span id="status-btn-text">Update</span>
             <span id="status-spinner" class="spinner hidden"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── User CRUD Modal (Admin) ── -->
+  <div id="user-modal" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
+    <div class="modal" role="document">
+      <div class="modal-header">
+        <h2 class="modal-title" id="user-modal-title">Add Doctor</h2>
+        <button class="modal-close" id="close-user-modal" aria-label="Close">✕</button>
+      </div>
+      <div id="user-modal-alert" role="alert" aria-live="polite"></div>
+      <form id="user-form" class="auth-form" novalidate>
+        <div class="form-group">
+          <label class="form-label" for="user-fullname">Full Name</label>
+          <input class="form-input" type="text" id="user-fullname" placeholder="e.g. Dr. John Smith" required />
+          <span id="user-fullname-err" class="form-error hidden"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="user-email">Email</label>
+          <input class="form-input" type="email" id="user-email" placeholder="john@clinic.com" required />
+          <span id="user-email-err" class="form-error hidden"></span>
+        </div>
+        <div class="form-group" id="user-password-group">
+          <label class="form-label" for="user-password">Password <span class="text-xs text-muted" id="password-hint">(min 8 characters)</span></label>
+          <input class="form-input" type="password" id="user-password" placeholder="••••••••" />
+          <span id="user-password-err" class="form-error hidden"></span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="user-role">Role</label>
+          <select class="form-select" id="user-role">
+            <option value="doctor">Doctor</option>
+            <option value="patient">Patient</option>
+          </select>
+        </div>
+        <div class="form-group" id="specialization-group">
+          <label class="form-label" for="user-specialization">Specialization</label>
+          <input class="form-input" type="text" id="user-specialization" placeholder="e.g. Cardiology, General Medicine" />
+        </div>
+        <div class="form-group" id="phone-group">
+          <label class="form-label" for="user-phone">Phone</label>
+          <input class="form-input" type="tel" id="user-phone" placeholder="e.g. +94 77 123 4567" />
+        </div>
+        <div class="flex gap-3" style="justify-content:flex-end;">
+          <button type="button" id="cancel-user-btn" class="btn btn-secondary">Cancel</button>
+          <button type="submit" id="user-submit-btn" class="btn btn-primary">
+            <span id="user-btn-text">Create</span>
+            <span id="user-spinner" class="spinner hidden"></span>
           </button>
         </div>
       </form>

@@ -55,9 +55,16 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-function requireClient(req, res, next) {
-  if (req.user?.role !== 'client') {
-    return res.status(403).json({ message: 'Client access only' });
+function requirePatient(req, res, next) {
+  if (req.user?.role !== 'patient') {
+    return res.status(403).json({ message: 'Patient access only' });
+  }
+  next();
+}
+
+function requireAdminOrDoctor(req, res, next) {
+  if (req.user?.role !== 'admin' && req.user?.role !== 'doctor') {
+    return res.status(403).json({ message: 'Staff access required' });
   }
   next();
 }
@@ -109,9 +116,9 @@ function errorHandler(err, req, res, next) {
   // MongoDB duplicate key (unique constraint)
   if (err.code === 11000) {
     const field = Object.keys(err.keyPattern || {})[0] || 'field';
-    if (field === 'startsAt') {
+    if (field === 'startsAt' || field === 'doctor') {
       return res.status(409).json({
-        message: 'That slot was just taken; please choose another.',
+        message: 'That slot was just taken for this doctor; please choose another.',
       });
     }
     if (field === 'email') {
@@ -125,6 +132,17 @@ function errorHandler(err, req, res, next) {
     return res.status(401).json({ message: 'Session invalid, please log in' });
   }
 
+  // MongoDB Atlas IP whitelist / SSL connection error
+  if (
+    err.name === 'MongooseServerSelectionError' ||
+    (err.message && (err.message.includes('SSL routines') || err.message.includes('alert number 80') || err.message.includes('whitelist')))
+  ) {
+    console.error('❌ MongoDB Atlas connection failure:', err.message);
+    return res.status(503).json({
+      message: 'Database connection failed: MongoDB Atlas rejected the TLS connection. Please verify your current IP address is whitelisted in MongoDB Atlas Network Access (or allow 0.0.0.0/0).',
+    });
+  }
+
   if (isDev) {
     console.error(err);
     return res.status(err.status || 500).json({ message: err.message, stack: err.stack });
@@ -136,7 +154,8 @@ function errorHandler(err, req, res, next) {
 module.exports = {
   authenticate,
   requireAdmin,
-  requireClient,
+  requirePatient,
+  requireAdminOrDoctor,
   validate,
   validateObjectId,
   errorHandler,

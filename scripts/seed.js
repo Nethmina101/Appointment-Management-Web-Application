@@ -26,6 +26,21 @@ async function seed() {
     console.log(`✅ Admin account created: ${email}`);
   }
 
+  // Seed sample doctor if none exists
+  const doctorCount = await User.countDocuments({ role: 'doctor' });
+  if (doctorCount === 0) {
+    const docHash = await User.hashPassword('DoctorPass@123');
+    await User.create({
+      name: 'Dr. Sarah Connor',
+      email: 'dr.sarah@example.com',
+      passwordHash: docHash,
+      role: 'doctor',
+      specialization: 'Cardiology',
+      phone: '+1 555-0199',
+    });
+    console.log('✅ Sample doctor created: dr.sarah@example.com / DoctorPass@123');
+  }
+
   await mongoose.disconnect();
 }
 

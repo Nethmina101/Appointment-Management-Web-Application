@@ -23,7 +23,7 @@
     // Show session banner instead of hard-redirecting so user is never trapped
     sessionBanner.classList.remove('hidden');
     activeUserName.textContent = `Signed in as ${currentUser.name}`;
-    activeUserRole.textContent = `Role: ${currentUser.role === 'admin' ? 'Administrator' : 'Patient'}`;
+    activeUserRole.textContent = `Role: ${currentUser.role === 'admin' ? 'Administrator' : (currentUser.role === 'doctor' ? 'Doctor' : 'Patient')}`;
     activeUserAvatar.textContent = (currentUser.name || '?').charAt(0).toUpperCase();
 
     // If user arrived without requesting switch/stay, offer 1-click continue

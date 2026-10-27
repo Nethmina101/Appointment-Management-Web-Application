@@ -29,6 +29,11 @@ const appointmentSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    doctor: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
     title: {
       type: String,
       required: [true, 'Title is required'],
@@ -67,16 +72,19 @@ const appointmentSchema = new mongoose.Schema(
 // ---------------------------------------------------------------------------
 appointmentSchema.index({ startsAt: 1 });
 appointmentSchema.index({ user: 1, startsAt: 1 });
+appointmentSchema.index({ doctor: 1, startsAt: 1 });
 appointmentSchema.index({ status: 1 });
 
-// Partial unique index: prevent double-booking active slots
-// Applied only when status is pending or approved
+// Partial unique index: prevent double-booking active slots per doctor
 appointmentSchema.index(
-  { startsAt: 1 },
+  { doctor: 1, startsAt: 1 },
   {
     unique: true,
-    partialFilterExpression: { status: { $in: ['pending', 'approved'] } },
-    name: 'unique_active_slot',
+    partialFilterExpression: { 
+      status: { $in: ['pending', 'approved'] },
+      doctor: { $ne: null }
+    },
+    name: 'unique_doctor_active_slot',
   }
 );
 

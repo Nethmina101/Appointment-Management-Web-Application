@@ -29,7 +29,7 @@ function isWeekend(date) {
 // ── POST /api/appointments ──────────────────────────────────────────────────
 exports.create = async (req, res, next) => {
   try {
-    const { title, startsAt, durationMinutes, notes } = req.body;
+    const { title, startsAt, durationMinutes, notes, doctor } = req.body;
     const userId = req.user.id;
     const startDate = new Date(startsAt);
 
@@ -58,14 +58,21 @@ exports.create = async (req, res, next) => {
       });
     }
 
-    const appointment = await Appointment.create({
+    const appointmentData = {
       user: userId,
       title,
       startsAt: startDate,
       durationMinutes: durationMinutes || 30,
       notes: notes || '',
       statusHistory: [{ status: 'pending', changedBy: userId }],
-    });
+    };
+
+    // Attach doctor if provided
+    if (doctor) {
+      appointmentData.doctor = doctor;
+    }
+
+    const appointment = await Appointment.create(appointmentData);
 
     return res.status(201).json({ message: 'Appointment booked', appointment });
   } catch (err) {
@@ -76,13 +83,18 @@ exports.create = async (req, res, next) => {
 // ── GET /api/appointments ───────────────────────────────────────────────────
 exports.list = async (req, res, next) => {
   try {
-    const isAdmin = req.user.role === 'admin';
+    const isAdmin  = req.user.role === 'admin';
+    const isDoctor = req.user.role === 'doctor';
     const { status, from, to, search, page = 1, limit = PAGE_DEFAULT } = req.query;
 
     const filter = {};
 
-    // Ownership
-    if (!isAdmin) filter.user = new mongoose.Types.ObjectId(req.user.id);
+    // Ownership: doctors see appointments booked with them; patients see their own; admin sees all
+    if (isDoctor) {
+      filter.doctor = new mongoose.Types.ObjectId(req.user.id);
+    } else if (!isAdmin) {
+      filter.user = new mongoose.Types.ObjectId(req.user.id);
+    }
 
     if (status) filter.status = status;
     if (from || to) {
@@ -91,8 +103,7 @@ exports.list = async (req, res, next) => {
       if (to)   filter.startsAt.$lte = new Date(to);
     }
 
-    // Admin search by client name (requires populate — done below)
-    // For search by title:
+    // Search by title or patient name (for doctors/admins)
     if (search) {
       filter.title = { $regex: search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), $options: 'i' };
     }
@@ -104,8 +115,9 @@ exports.list = async (req, res, next) => {
         .sort({ startsAt: 1 })
         .skip(skip)
         .limit(limit)
-        .populate('user', 'name email') // fetch only name + email
-        .lean(), // lean for performance
+        .populate('user', 'name email') // patient info
+        .populate('doctor', 'name email specialization phone') // doctor info
+        .lean(),
       Appointment.countDocuments(filter),
     ]);
 
@@ -130,7 +142,7 @@ exports.reschedule = async (req, res, next) => {
     const userId = req.user.id;
     const { startsAt, durationMinutes, notes } = req.body;
 
-    // Ownership + IDOR protection
+    // Ownership + IDOR protection (patients reschedule their own)
     const appt = await Appointment.findOne({ _id: id, user: userId });
     if (!appt) return res.status(404).json({ message: 'Appointment not found' });
 
@@ -152,8 +164,8 @@ exports.reschedule = async (req, res, next) => {
     appt.startsAt = newDate;
     if (durationMinutes) appt.durationMinutes = durationMinutes;
     if (notes !== undefined) appt.notes = notes;
-    appt.status = 'pending'; // reset to pending so admin re-approves
-    appt.statusHistory.push({ status: 'pending', changedBy: userId, note: 'Rescheduled by client' });
+    appt.status = 'pending'; // reset to pending so doctor/admin re-approves
+    appt.statusHistory.push({ status: 'pending', changedBy: userId, note: 'Rescheduled by patient' });
 
     await appt.save();
     return res.json({ message: 'Appointment rescheduled', appointment: appt });
@@ -168,7 +180,11 @@ exports.cancel = async (req, res, next) => {
     const { id } = req.params;
     const { role, id: userId } = req.user;
 
-    const filter = role === 'admin' ? { _id: id } : { _id: id, user: userId };
+    let filter;
+    if (role === 'admin') filter = { _id: id };
+    else if (role === 'doctor') filter = { _id: id, doctor: userId };
+    else filter = { _id: id, user: userId };
+
     const appt = await Appointment.findOne(filter);
     if (!appt) return res.status(404).json({ message: 'Appointment not found' });
 
@@ -177,10 +193,11 @@ exports.cancel = async (req, res, next) => {
     }
 
     appt.status = 'cancelled';
+    const cancelActor = role === 'admin' ? 'Cancelled by admin' : (role === 'doctor' ? 'Cancelled by doctor' : 'Cancelled by patient');
     appt.statusHistory.push({
       status: 'cancelled',
       changedBy: userId,
-      note: role === 'admin' ? 'Cancelled by admin' : 'Cancelled by client',
+      note: cancelActor,
     });
     await appt.save();
     return res.json({ message: 'Appointment cancelled', appointment: appt });
@@ -189,7 +206,7 @@ exports.cancel = async (req, res, next) => {
   }
 };
 
-// ── PATCH /api/appointments/:id/status  (admin only) ───────────────────────
+// ── PATCH /api/appointments/:id/status  (admin or assigned doctor) ──────────
 exports.updateStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
@@ -197,6 +214,11 @@ exports.updateStatus = async (req, res, next) => {
 
     const appt = await Appointment.findById(id);
     if (!appt) return res.status(404).json({ message: 'Appointment not found' });
+
+    // If doctor, ensure appointment belongs to this doctor
+    if (req.user.role === 'doctor' && (!appt.doctor || appt.doctor.toString() !== req.user.id)) {
+      return res.status(403).json({ message: 'You can only update appointments assigned to you' });
+    }
 
     if (!Appointment.isValidTransition(appt.status, status)) {
       return res.status(400).json({
@@ -216,7 +238,7 @@ exports.updateStatus = async (req, res, next) => {
 // ── GET /api/appointments/availability ─────────────────────────────────────
 exports.availability = async (req, res, next) => {
   try {
-    const { date } = req.query;
+    const { date, doctor } = req.query;
     const dayStart = new Date(date);
     dayStart.setUTCHours(0, 0, 0, 0);
 
@@ -227,11 +249,16 @@ exports.availability = async (req, res, next) => {
     const dayEnd = new Date(dayStart);
     dayEnd.setUTCHours(23, 59, 59, 999);
 
-    // Get all active bookings for that day
-    const booked = await Appointment.find({
+    // Get all active bookings for that day (optionally filtered by doctor)
+    const bookedFilter = {
       startsAt: { $gte: dayStart, $lte: dayEnd },
       status: { $in: ['pending', 'approved'] },
-    })
+    };
+    if (doctor) {
+      bookedFilter.doctor = doctor;
+    }
+
+    const booked = await Appointment.find(bookedFilter)
       .select('startsAt durationMinutes')
       .lean();
 

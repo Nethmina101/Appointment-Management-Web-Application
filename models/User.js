@@ -32,8 +32,21 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['client', 'admin'],
-      default: 'client',
+      enum: ['patient', 'doctor', 'admin'],
+      default: 'patient',
+    },
+    // Doctor-specific fields
+    specialization: {
+      type: String,
+      trim: true,
+      maxlength: [100, 'Specialization must be at most 100 characters'],
+      default: '',
+    },
+    phone: {
+      type: String,
+      trim: true,
+      maxlength: [20, 'Phone must be at most 20 characters'],
+      default: '',
     },
     failedLoginCount: {
       type: Number,

@@ -8,7 +8,7 @@ exports.signup = async (req, res, next) => {
     const { name, email, password } = req.body;
 
     const passwordHash = await User.hashPassword(password);
-    const user = await User.create({ name, email, passwordHash, role: 'client' });
+    const user = await User.create({ name, email, passwordHash, role: 'patient' });
 
     const token = signToken({ id: user._id, role: user.role });
     res.cookie(COOKIE_NAME, token, cookieOptions());
@@ -82,7 +82,7 @@ exports.logout = (req, res) => {
 // ── GET /api/auth/me ───────────────────────────────────────────────────────
 exports.me = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user.id).select('name email role createdAt');
+    const user = await User.findById(req.user.id).select('name email role specialization phone createdAt');
     if (!user) return res.status(404).json({ message: 'User not found' });
     return res.json({ user });
   } catch (err) {
