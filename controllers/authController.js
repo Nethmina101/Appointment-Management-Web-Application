@@ -63,11 +63,20 @@ exports.login = async (req, res, next) => {
 // ── POST /api/auth/logout ──────────────────────────────────────────────────
 exports.logout = (req, res) => {
   res.clearCookie(COOKIE_NAME, {
+    path: '/',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
   });
-  return res.json({ message: 'Logged out' });
+  res.cookie(COOKIE_NAME, '', {
+    path: '/',
+    expires: new Date(0),
+    maxAge: 0,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+  });
+  return res.json({ message: 'Logged out successfully' });
 };
 
 // ── GET /api/auth/me ───────────────────────────────────────────────────────

@@ -61,8 +61,11 @@ window.auth = {
   },
 
   async logout() {
-    await window.api.post('/api/auth/logout').catch(() => {});
-    window.location.href = '/';
+    window.auth.user = null;
+    try {
+      await window.api.post('/api/auth/logout');
+    } catch {}
+    window.location.href = '/?loggedout=1';
   },
 };
 

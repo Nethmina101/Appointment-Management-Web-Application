@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Sign in to your Appointment Management account." />
-  <title>Login — AppointBook</title>
+  <meta name="description" content="Sign in or register as a patient with AppointBook appointment management." />
+  <title>Portal — AppointBook</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body class="gradient-bg">
@@ -18,56 +18,172 @@
     <div class="auth-card" role="main">
       <!-- Logo -->
       <div class="auth-logo">
-        <div class="auth-logo-icon" aria-hidden="true">📅</div>
-        <h1 class="auth-title">Welcome back</h1>
-        <p class="auth-subtitle">Sign in to manage your appointments</p>
+        <div class="auth-logo-icon" aria-hidden="true">🏥</div>
+        <h1 class="auth-title" id="portal-title">AppointBook</h1>
+        <p class="auth-subtitle" id="portal-subtitle">Patient & Clinic Appointment Portal</p>
+      </div>
+
+      <!-- Active Session Notice (shows only if currently logged in) -->
+      <div id="session-banner" class="session-banner hidden" role="region" aria-label="Current session">
+        <div class="session-info">
+          <div class="user-avatar" id="active-user-avatar" style="width:36px;height:36px;font-size:16px;">?</div>
+          <div>
+            <div class="font-semibold text-sm" id="active-user-name">Signed in</div>
+            <div class="text-xs text-muted" id="active-user-role">Role</div>
+          </div>
+        </div>
+        <div class="session-actions">
+          <a href="/dashboard.html" class="btn btn-primary btn-sm" style="flex:1;text-align:center;">
+            Go to Dashboard →
+          </a>
+          <button type="button" id="switch-account-btn" class="btn btn-secondary btn-sm">
+            Sign Out
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs: Login vs Register -->
+      <div class="auth-tabs" role="tablist" aria-label="Portal access modes">
+        <button type="button" class="auth-tab-btn active" id="tab-login" role="tab" aria-selected="true" aria-controls="pane-login">
+          Sign In
+        </button>
+        <button type="button" class="auth-tab-btn" id="tab-signup" role="tab" aria-selected="false" aria-controls="pane-signup">
+          New Patient Register
+        </button>
       </div>
 
       <!-- Alert area -->
       <div id="alert-box" role="alert" aria-live="polite"></div>
 
-      <!-- Form -->
-      <form id="login-form" class="auth-form" novalidate autocomplete="on">
-        <div class="form-group">
-          <label class="form-label" for="email">Email address</label>
-          <input
-            class="form-input"
-            type="email"
-            id="email"
-            name="email"
-            autocomplete="email"
-            placeholder="you@example.com"
-            required
-            aria-required="true"
-            aria-describedby="email-error"
-          />
-          <span id="email-error" class="form-error hidden" aria-live="polite"></span>
+      <!-- ── TAB PANE 1: LOGIN ── -->
+      <div id="pane-login" role="tabpanel" aria-labelledby="tab-login">
+        <form id="login-form" class="auth-form" novalidate autocomplete="on">
+          <div class="form-group">
+            <label class="form-label" for="login-email">Email address</label>
+            <input
+              class="form-input"
+              type="email"
+              id="login-email"
+              name="email"
+              autocomplete="email"
+              placeholder="patient@example.com"
+              required
+              aria-required="true"
+              aria-describedby="login-email-error"
+            />
+            <span id="login-email-error" class="form-error hidden" aria-live="polite"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="login-password">Password</label>
+            <input
+              class="form-input"
+              type="password"
+              id="login-password"
+              name="password"
+              autocomplete="current-password"
+              placeholder="••••••••"
+              required
+              aria-required="true"
+              aria-describedby="login-password-error"
+            />
+            <span id="login-password-error" class="form-error hidden" aria-live="polite"></span>
+          </div>
+
+          <button type="submit" id="login-submit-btn" class="btn btn-primary w-full">
+            <span id="login-btn-text">Sign In to Account</span>
+            <span id="login-btn-spinner" class="spinner hidden" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <!-- Quick Demo Helper -->
+        <div class="demo-pill">
+          <div>
+            <strong style="color:var(--clr-text);">Admin Demo Account:</strong>
+            <span class="text-xs text-muted" style="display:block;">admin@example.com · AdminPass@123</span>
+          </div>
+          <button type="button" id="fill-admin-btn" class="btn btn-secondary btn-sm">
+            Fill Demo
+          </button>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label class="form-label" for="password">Password</label>
-          <input
-            class="form-input"
-            type="password"
-            id="password"
-            name="password"
-            autocomplete="current-password"
-            placeholder="••••••••"
-            required
-            aria-required="true"
-            aria-describedby="password-error"
-          />
-          <span id="password-error" class="form-error hidden" aria-live="polite"></span>
-        </div>
+      <!-- ── TAB PANE 2: PATIENT SIGNUP ── -->
+      <div id="pane-signup" role="tabpanel" aria-labelledby="tab-signup" class="hidden">
+        <form id="signup-form" class="auth-form" novalidate autocomplete="on">
+          <div class="form-group">
+            <label class="form-label" for="signup-name">Patient Full Name</label>
+            <input
+              class="form-input"
+              type="text"
+              id="signup-name"
+              name="name"
+              autocomplete="name"
+              placeholder="e.g. Sarah Connor"
+              required
+              aria-required="true"
+              aria-describedby="signup-name-error"
+            />
+            <span id="signup-name-error" class="form-error hidden" aria-live="polite"></span>
+          </div>
 
-        <button type="submit" id="submit-btn" class="btn btn-primary w-full">
-          <span id="btn-text">Sign In</span>
-          <span id="btn-spinner" class="spinner hidden" aria-hidden="true"></span>
-        </button>
-      </form>
+          <div class="form-group">
+            <label class="form-label" for="signup-email">Email address</label>
+            <input
+              class="form-input"
+              type="email"
+              id="signup-email"
+              name="email"
+              autocomplete="email"
+              placeholder="sarah@example.com"
+              required
+              aria-required="true"
+              aria-describedby="signup-email-error"
+            />
+            <span id="signup-email-error" class="form-error hidden" aria-live="polite"></span>
+          </div>
 
-      <div class="auth-footer">
-        Don't have an account? <a href="/signup.html">Create one</a>
+          <div class="form-group">
+            <label class="form-label" for="signup-password">Password <span class="text-xs text-muted">(min 8 characters)</span></label>
+            <input
+              class="form-input"
+              type="password"
+              id="signup-password"
+              name="password"
+              autocomplete="new-password"
+              placeholder="••••••••"
+              required
+              aria-required="true"
+              aria-describedby="signup-password-error"
+            />
+            <span id="signup-password-error" class="form-error hidden" aria-live="polite"></span>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="signup-confirmPassword">Confirm Password</label>
+            <input
+              class="form-input"
+              type="password"
+              id="signup-confirmPassword"
+              name="confirmPassword"
+              autocomplete="new-password"
+              placeholder="••••••••"
+              required
+              aria-required="true"
+              aria-describedby="signup-confirm-error"
+            />
+            <span id="signup-confirm-error" class="form-error hidden" aria-live="polite"></span>
+          </div>
+
+          <button type="submit" id="signup-submit-btn" class="btn btn-primary w-full">
+            <span id="signup-btn-text">Register Patient Account</span>
+            <span id="signup-btn-spinner" class="spinner hidden" aria-hidden="true"></span>
+          </button>
+        </form>
+      </div>
+
+      <div class="auth-footer" id="footer-helper">
+        <span>Need assistance? Contact your clinic administrator.</span>
       </div>
     </div>
   </main>

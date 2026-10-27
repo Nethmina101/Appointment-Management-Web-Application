@@ -55,9 +55,9 @@
   const bookSpinner  = document.getElementById('book-spinner');
 
   // Status modal (admin)
-  const statusModal  = document.getElementById('status-modal');
-  const closeStatusModal = document.getElementById('close-status-modal');
-  const cancelStatusBtn  = document.getElementById('cancel-status-btn');
+  const statusModal        = document.getElementById('status-modal');
+  const closeStatusModalBtn = document.getElementById('close-status-modal');
+  const cancelStatusBtn    = document.getElementById('cancel-status-btn');
   const statusForm       = document.getElementById('status-form');
   const newStatusSelect  = document.getElementById('new-status');
   const statusNote       = document.getElementById('status-note');
@@ -93,8 +93,9 @@
 
   // ── Logout ───────────────────────────────────────────────────
   logoutBtn.addEventListener('click', async () => {
-    const ok = await confirmAction('Are you sure you want to sign out?', 'Sign Out', false);
-    if (ok) window.auth.logout();
+    logoutBtn.disabled = true;
+    logoutBtn.textContent = 'Signing out…';
+    await window.auth.logout();
   });
 
   // ── Set min date for filter-from ──────────────────────────────
@@ -403,7 +404,7 @@
     statusTarget = null;
   }
 
-  closeStatusModal.addEventListener('click', closeStatusModal);
+  closeStatusModalBtn.addEventListener('click', closeStatusModal);
   cancelStatusBtn.addEventListener('click', closeStatusModal);
   statusModal.addEventListener('click', (e) => { if (e.target === statusModal) closeStatusModal(); });
 
